@@ -15,6 +15,39 @@ var cfenv = require('cfenv');
 // create a new express server
 var app = express();
 
+// ----------ここから----------
+var bodyParser = require('body-parser');
+
+app.use(bodyParser.urlencoded({
+  extended: true
+}));
+app.use(bodyParser.json());
+var request = require('request');
+
+app.post('/api', function(req, res) {
+  var options = {
+    method: 'POST',
+    uri: 'https://api.line.me/v2/bot/message/reply',
+    body: {
+      replyToken: req.body.events[0].replyToken,
+      messages: [{
+        type: "text",
+        text: req.body.events[0].message.text
+      }]
+    },
+    auth: {
+//      bearer: 'Channel Access Token' // ここは自分のtokenに書き換える
+        bearer: 'eTHucFEaH/DE70uArA1jo81RAjUkI6twA9jmlsfjoZje/hobzKQr23VevFH53QtLN9gdnMgdKT3TW3lWX3oU6cIC/ez/g6kaIF1I0hV3Hxd1PAbgsWKncQF4IbjGNWJy7Qf/gq6hz83dQRicq6lbgAdB04t89/1O/w1cDnyilFU='
+    },
+    json: true
+  };
+  request(options, function(err, res, body) {
+    console.log(JSON.stringify(res));
+  });
+  res.send('OK');
+});
+// --------ここまで追加--------
+
 // serve the files out of ./public as our main files
 app.use(express.static(__dirname + '/public'));
 
