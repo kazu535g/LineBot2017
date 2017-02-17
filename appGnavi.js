@@ -104,7 +104,7 @@ app.post('/gnavi', function(req, res){
                     if('image_url' in body.rest){
                         search_result['shop_image1'] = body.rest.image_url.shop_image1;
                     }
-/*
+
                     // 緯度
                     if('latitude' in body.rest){
                         search_result['latitude'] = body.rest.latitude;
@@ -113,7 +113,7 @@ app.post('/gnavi', function(req, res){
                     if('longitude' in body.rest){
                         search_result['longitude'] = body.rest.longitude;
                     }
- */
+
                     gnavi(null, json, search_result);
 
                 } else {
@@ -130,32 +130,25 @@ app.post('/gnavi', function(req, res){
             return;
         }
 
-        //ヘッダーを定義
+        //ヘッダー定義
         var headers = {
             'Content-Type' : 'application/json; charset=UTF-8',
-            'X-Line-ChannelID' : '1501556388',
+///            'X-Line-ChannelID' : '1501556388',
 ///            'X-Line-ChannelSecret' : '',
 ///            'X-Line-Trusted-User-With-ACL' : '<Your MID>'
         };
-
-///        // 送信相手の設定（配列）
-///        var to_array = [];
-///        to_array.push(json['result'][0]['content']['from']);
 
 
         // 送信データ作成
         var data = {
 　　　　　      replyToken: req.body.events[0].replyToken,
-///              'to': to_array,
-///              'toChannel': 1501556388, //固定
-///              'eventType':'140177271400161403', //固定
-///              content: {
-///              messageNotified: 0,
-              messages: [
+
+            messages: [
 
 /*　TEST
                     // type:
                     // Must be one of the following values: [text, image, video, audio, location, sticker, template, imagemap]
+                    // REference: https://devdocs.line.me/ja/#webhook-event-object
                     {
                     type: "text",
                     text: "TEST MESSAGE!"
@@ -175,20 +168,15 @@ app.post('/gnavi', function(req, res){
                         previewImageUrl: search_result['shop_image1']
                     },
 
-/*
                     // 位置情報
                     {
-                        type: "text",
-                        text: search_result['name'] +
-                        location:{
-                            title: search_result['address'],
-                            latitude: Number(search_result['latitude']),
-                            longitude: Number(search_result['longitude'])
-                        }
+                        type: "location",
+                        title: '◆地図：',
+                        address: search_result['address'],
+                        latitude: Number(search_result['latitude']),
+                        longitude: Number(search_result['longitude'])
                     }
-*/
-              ]
-///            }
+            ]
         };
 
         //オプションを定義
