@@ -3,7 +3,8 @@
 	"version": "0.0.1",
 	"private": true,
 	"scripts": {
-		"start": "node app.js"
+//		"start": "node app.js"	//LINE BOT(入力文字をそのまま返却)
+		"start": "node appG.js"	//LINE BOT(ぐるなびAPIでお店検索)　http://api.gnavi.co.jp/api/tools/
 	},
 	"dependencies": {
 		"body-parser": "1.15.2",
