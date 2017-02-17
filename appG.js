@@ -26,7 +26,7 @@ var request = require('request');
 
 var async = require('async');
 
-app.post('/callback', function(req, res){
+app.post('/api', function(req, res){
 
     async.waterfall([
         // ぐるなびAPI
