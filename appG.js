@@ -41,11 +41,16 @@ app.post('/callback', function(req, res){
                 if(search_place_array.length == 2){
                 var keyword_array = search_place_array[1].split("、");
                 gnavi_keyword = keyword_array.join();
-            }
-
+                }
 */
 
-/* TEST Level.2
+/* TEST Ver0.1
+                //ハードコード
+                var gnavi_address = "shinbashi"
+                var gnavi_keyword = ""
+*/
+
+// TEST Ver0.2
             // 受信テキスト
                 var search_place = req.body.events[0].message.text;
                 var search_place_array = search_place.split("\n");
@@ -55,13 +60,7 @@ app.post('/callback', function(req, res){
                 if(search_place_array.length == 2){
                 var keyword_array = search_place_array[1].split("、");
                 gnavi_keyword = keyword_array.join();
-*/
-
-/* TEST Level.1 */
-                //ハードコード
-                var gnavi_address = "shinbashi"
-                var gnavi_keyword = ""
-
+                }
 
             // ぐるなびAPI レストラン検索API http://api.gnavi.co.jp/api/tools/
             var gnavi_url = 'https://api.gnavi.co.jp/RestSearchAPI/20150630/';
@@ -70,12 +69,13 @@ app.post('/callback', function(req, res){
             var gnavi_query = {
                 "keyid":"35492d64fa5b3a5e84c63f7167a9aea2",	//<ぐるなびのアクセスキー>
                 "format": "json",
-///                "address": search_place_array[0],
-
-                "address": gnavi_address,
                 "hit_per_page": 1,
-                "freeword": gnavi_keyword,
-                "freeword_condition": 2
+                "freeword_condition": 2,
+// TEST Ver0.1
+//                "address": gnavi_address,
+// TEST Ver0.2
+                "address": search_place_array[0],
+                "freeword": gnavi_keyword
             };
             var gnavi_options = {
                 url: gnavi_url,
@@ -138,7 +138,6 @@ app.post('/callback', function(req, res){
                     console.log('error: '+ response.statusCode);
                 }
             });
-
         },
     ],
 
