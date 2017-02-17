@@ -20,47 +20,30 @@ var bodyParser = require('body-parser');
 var request = require('request');
 var async = require('async');
 
-app.set('port', (process.env.PORT || 5000));
+///app.set('port', (process.env.PORT || 5000));
 app.use(bodyParser.urlencoded({extended: true}));  // JSONの送信を許可
 app.use(bodyParser.json());                        // JSONのパースを楽に（受信時）
 
-app.post('/callback', function(req, res){
+// LINE developersのWebhook URL設定と同値
+app.post('/gnavi', function(req, res){
 
     async.waterfall([
         // ぐるなびAPI
-        function(callback) {
+        // http://api.gnavi.co.jp/api/tools/
+        function(gnavi) {
 
             var json = req.body;
-/* Original
+
             // 受信テキスト
-            var search_place = json['result'][0]['content']['text'];
+            var search_place = json.events[0].message.text;
             var search_place_array = search_place.split("\n");
 
             //検索キーワード
-                var gnavi_keyword = "";
-                if(search_place_array.length == 2){
+            var gnavi_keyword = "";
+            if(search_place_array.length == 2){
                 var keyword_array = search_place_array[1].split("、");
                 gnavi_keyword = keyword_array.join();
-                }
-*/
-
-/* TEST Ver0.1
-                //ハードコード
-                var gnavi_address = "shinbashi"
-                var gnavi_keyword = ""
-*/
-
-// TEST Ver0.2
-            // 受信テキスト
-                var search_place = req.body.events[0].message.text;
-                var search_place_array = search_place.split("\n");
-                
-            //検索キーワード
-                var gnavi_keyword = "";
-                if(search_place_array.length == 2){
-                var keyword_array = search_place_array[1].split("、");
-                gnavi_keyword = keyword_array.join();
-                }
+            }
 
             // ぐるなびAPI レストラン検索API http://api.gnavi.co.jp/api/tools/
             var gnavi_url = 'https://api.gnavi.co.jp/RestSearchAPI/20150630/';
@@ -71,11 +54,10 @@ app.post('/callback', function(req, res){
                 "format": "json",
                 "hit_per_page": 1,
                 "freeword_condition": 2,
-// TEST Ver0.1
-//                "address": gnavi_address,
-// TEST Ver0.2
                 "address": search_place_array[0],
+//                "address": "shinbashi",	// TEST Ver0.1
                 "freeword": gnavi_keyword
+//                "freeword": ""			// TEST Ver0.1
             };
             var gnavi_options = {
                 url: gnavi_url,
@@ -132,7 +114,7 @@ app.post('/callback', function(req, res){
                         search_result['longitude'] = body.rest.longitude;
                     }
  */
-                    callback(null, json, search_result);
+                    gnavi(null, json, search_result);
 
                 } else {
                     console.log('error: '+ response.statusCode);
