@@ -17,14 +17,12 @@ var app = express();
 
 // ----------ここから----------
 var bodyParser = require('body-parser');
-
-app.use(bodyParser.urlencoded({
-  extended: true
-}));
-app.use(bodyParser.json());
 var request = require('request');
-
 var async = require('async');
+
+app.set('port', (process.env.PORT || 5000));
+app.use(bodyParser.urlencoded({extended: true}));  // JSONの送信を許可
+app.use(bodyParser.json());                        // JSONのパースを楽に（受信時）
 
 app.post('/callback', function(req, res){
 
@@ -33,17 +31,37 @@ app.post('/callback', function(req, res){
         function(callback) {
 
             var json = req.body;
-
+/* Original
             // 受信テキスト
             var search_place = json['result'][0]['content']['text'];
             var search_place_array = search_place.split("\n");
 
             //検索キーワード
-            var gnavi_keyword = "";
-            if(search_place_array.length == 2){
+                var gnavi_keyword = "";
+                if(search_place_array.length == 2){
                 var keyword_array = search_place_array[1].split("、");
                 gnavi_keyword = keyword_array.join();
             }
+
+*/
+
+/* TEST Level.2
+            // 受信テキスト
+                var search_place = req.body.events[0].message.text;
+                var search_place_array = search_place.split("\n");
+                
+            //検索キーワード
+                var gnavi_keyword = "";
+                if(search_place_array.length == 2){
+                var keyword_array = search_place_array[1].split("、");
+                gnavi_keyword = keyword_array.join();
+*/
+
+/* TEST Level.1 */
+                //ハードコード
+                var gnavi_address = "shinbashi"
+                var gnavi_keyword = ""
+
 
             // ぐるなびAPI レストラン検索API http://api.gnavi.co.jp/api/tools/
             var gnavi_url = 'https://api.gnavi.co.jp/RestSearchAPI/20150630/';
@@ -52,7 +70,9 @@ app.post('/callback', function(req, res){
             var gnavi_query = {
                 "keyid":"35492d64fa5b3a5e84c63f7167a9aea2",	//<ぐるなびのアクセスキー>
                 "format": "json",
-                "address": search_place_array[0],
+///                "address": search_place_array[0],
+
+                "address": gnavi_address,
                 "hit_per_page": 1,
                 "freeword": gnavi_keyword,
                 "freeword_condition": 2
@@ -78,27 +98,40 @@ app.post('/callback', function(req, res){
                     if('name' in body.rest){
                         search_result['name'] = body.rest.name;
                     }
-                    // 画像
-                    if('image_url' in body.rest){
-                        search_result['shop_image1'] = body.rest.image_url.shop_image1;
+                    // 平均予算
+                    if('budget' in body.rest){
+                        search_result['budget'] = body.rest.budget;
                     }
-                    // 住所
-                    if('address' in body.rest){
-                        search_result['address'] = body.rest.address;
-                    }
-                    // 緯度
-                    if('latitude' in body.rest){
-                        search_result['latitude'] = body.rest.latitude;
-                    }
-                    // 軽度
-                    if('longitude' in body.rest){
-                        search_result['longitude'] = body.rest.longitude;
+                    // 電話番号
+                    if('tel' in body.rest){
+                        search_result['tel'] = body.rest.tel;
                     }
                     // 営業時間
                     if('opentime' in body.rest){
                         search_result['opentime'] = body.rest.opentime;
                     }
-
+                    // 住所
+                    if('address' in body.rest){
+                        search_result['address'] = body.rest.address;
+                    }
+                    // URL
+                    if('url' in body.rest){
+                        search_result['url'] = body.rest.url;
+                    }
+                    // 画像
+                    if('image_url' in body.rest){
+                        search_result['shop_image1'] = body.rest.image_url.shop_image1;
+                    }
+/*
+                    // 緯度
+                    if('latitude' in body.rest){
+                        search_result['latitude'] = body.rest.latitude;
+                    }
+                    // 経度
+                    if('longitude' in body.rest){
+                        search_result['longitude'] = body.rest.longitude;
+                    }
+ */
                     callback(null, json, search_result);
 
                 } else {
@@ -119,70 +152,78 @@ app.post('/callback', function(req, res){
         //ヘッダーを定義
         var headers = {
             'Content-Type' : 'application/json; charset=UTF-8',
-            'X-Line-ChannelID' : '1501662864',
-//            'X-Line-ChannelSecret' : '',
-//            'X-Line-Trusted-User-With-ACL' : '<Your MID>'
+            'X-Line-ChannelID' : '1501556388',
+///            'X-Line-ChannelSecret' : '',
+///            'X-Line-Trusted-User-With-ACL' : '<Your MID>'
         };
 
-        // 送信相手の設定（配列）
-        var to_array = [];
-        to_array.push(json['result'][0]['content']['from']);
+///        // 送信相手の設定（配列）
+///        var to_array = [];
+///        to_array.push(json['result'][0]['content']['from']);
 
 
         // 送信データ作成
         var data = {
-            'to': to_array,
-            'toChannel': 1501662864, //固定
-//            'eventType':'140177271400161403', //固定
-            "content": {
-                "messageNotified": 0,
-                "messages": [
+　　　　　      replyToken: req.body.events[0].replyToken,
+///              'to': to_array,
+///              'toChannel': 1501556388, //固定
+///              'eventType':'140177271400161403', //固定
+///              content: {
+///              messageNotified: 0,
+              messages: [
+
+/*　TEST
+                    // type:
+                    // Must be one of the following values: [text, image, video, audio, location, sticker, template, imagemap]
+                    {
+                    type: "text",
+                    text: "TEST MESSAGE!"
+                    },
+*/
+
                     // テキスト
                     {
-                        "contentType": 1,
-                        "text": 'こちらはいかがですか？\n【お店】' + search_result['name'] + '\n【営業時間】' + search_result['opentime'],
+                        type: "text",
+                        text: '◆店名：\n' + search_result['name'] + '\n◆平均予算：\n' + search_result['budget'] + '円\n◆営業時間：\n' + search_result['opentime'] + '\n◆電話番号：\n' + search_result['tel'] + '\n◆住所：\n' + search_result['address'] + '\n\n' + search_result['url'],
                     },
+
                     // 画像
                     {
-                        "contentType": 2,
-                        "originalContentUrl": search_result['shop_image1'],
-                        "previewImageUrl": search_result['shop_image1']
+                        type: "image",
+                        originalContentUrl: search_result['shop_image1'],
+                        previewImageUrl: search_result['shop_image1']
                     },
+
+/*
                     // 位置情報
                     {
-                        "contentType":7,
-                        "text": search_result['name'],
-                        "location":{
-                            "title": search_result['address'],
-                            "latitude": Number(search_result['latitude']),
-                            "longitude": Number(search_result['longitude'])
+                        type: "text",
+                        text: search_result['name'] +
+                        location:{
+                            title: search_result['address'],
+                            latitude: Number(search_result['latitude']),
+                            longitude: Number(search_result['longitude'])
                         }
                     }
-                ]
-            }
+*/
+              ]
+///            }
         };
 
         //オプションを定義
         var options = {
           method: 'POST',
           uri: 'https://api.line.me/v2/bot/message/reply',
+          headers: headers,
+          proxy : process.env.FIXIE_URL,
+          body: data,
           auth: {
-              bearer: 'eTHucFEaH/DE70uArA1jo81RAjUkI6twA9jmlsfjoZje/hobzKQr23VevFH53QtLN9gdnMgdKT3TW3lWX3oU6cIC/ez/g6kaIF1I0hV3Hxd1PAbgsWKncQF4IbjGNWJy7Qf/gq6hz83dQRicq6lbgAdB04t89/1O/w1cDnyilFU='
+    　　　　　　　//himekawa
+            bearer: 'eTHucFEaH/DE70uArA1jo81RAjUkI6twA9jmlsfjoZje/hobzKQr23VevFH53QtLN9gdnMgdKT3TW3lWX3oU6cIC/ez/g6kaIF1I0hV3Hxd1PAbgsWKncQF4IbjGNWJy7Qf/gq6hz83dQRicq6lbgAdB04t89/1O/w1cDnyilFU=' //himekawa
+    　　　　　　　//himekawa_trial
+            //bearer: 'kot0ml/nHkq0mplbcLKa5NIl0gi58FGRdQw/u9sL8ZBUtM1QztJyo+MD131tkUgnal6ThOWsRwLssL2oL1f69iWbYdNsHZf3ZJT3VuqafwRpf6Z5/S5oKU0bIe+OqhdIPn/CwHdAMZIwyp65j0Km4gdB04t89/1O/w1cDnyilFU=' //himekawa_trial
           },
-          json: true,
-
-          headers: headers,	//TRIAL
-          proxy : process.env.FIXIE_URL,	//TRIAL
-          body: data	//TRIAL
-
-//          body: {
-//            replyToken: req.body.events[0].replyToken,
-//            messages: [{
-//              type: "text",
-//              text: req.body.events[0].message.text,
-//            }]
-//          },
-
+          json: true
         };
   
         request(options, function(err, res, body) {
@@ -198,6 +239,7 @@ app.post('/callback', function(req, res){
 
 // serve the files out of ./public as our main files
 app.use(express.static(__dirname + '/public'));
+
 
 // get the app environment from Cloud Foundry
 var appEnv = cfenv.getAppEnv();

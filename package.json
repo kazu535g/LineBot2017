@@ -3,14 +3,15 @@
 	"version": "0.0.1",
 	"private": true,
 	"scripts": {
-//		"start": "node app.js"	//LINE BOT(入力文字をそのまま返却)
-		"start": "node appG.js"	//LINE BOT(ぐるなびAPIでお店検索)　http://api.gnavi.co.jp/api/tools/
+		"start": "node appG.js"
 	},
 	"dependencies": {
 		"body-parser": "1.15.2",
 		"express": "4.13.x",
 		"cfenv": "1.0.x",
-		"request": "2.75.0"
+		"request": "2.75.0",
+		"async":"latest",
+		"node":"latest"
     },
 	"repository": {},
 	"engines": {

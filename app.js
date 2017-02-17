@@ -37,8 +37,9 @@ app.post('/api', function(req, res) {
       }]
     },
     auth: {
-//      bearer: 'Channel Access Token' // ここは自分のtokenに書き換える
-        bearer: 'eTHucFEaH/DE70uArA1jo81RAjUkI6twA9jmlsfjoZje/hobzKQr23VevFH53QtLN9gdnMgdKT3TW3lWX3oU6cIC/ez/g6kaIF1I0hV3Hxd1PAbgsWKncQF4IbjGNWJy7Qf/gq6hz83dQRicq6lbgAdB04t89/1O/w1cDnyilFU='
+　　　　　　　//bearer: 'ここは自分のtokenに書き換える
+        bearer: 'eTHucFEaH/DE70uArA1jo81RAjUkI6twA9jmlsfjoZje/hobzKQr23VevFH53QtLN9gdnMgdKT3TW3lWX3oU6cIC/ez/g6kaIF1I0hV3Hxd1PAbgsWKncQF4IbjGNWJy7Qf/gq6hz83dQRicq6lbgAdB04t89/1O/w1cDnyilFU=' //himekawa
+//        bearer: 'kot0ml/nHkq0mplbcLKa5NIl0gi58FGRdQw/u9sL8ZBUtM1QztJyo+MD131tkUgnal6ThOWsRwLssL2oL1f69iWbYdNsHZf3ZJT3VuqafwRpf6Z5/S5oKU0bIe+OqhdIPn/CwHdAMZIwyp65j0Km4gdB04t89/1O/w1cDnyilFU=' //himekawa_trial
     },
     json: true
   };
