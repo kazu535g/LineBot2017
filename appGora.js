@@ -6,176 +6,301 @@
 
 // This application uses express as its web server
 // for more info, see: http://expressjs.com
-var express = require('express');
+var express = require("express");
 
 // cfenv provides access to your Cloud Foundry environment
 // for more info, see: https://www.npmjs.com/package/cfenv
-var cfenv = require('cfenv');
+var cfenv = require("cfenv");
 
 // create a new express server
 var app = express();
 
-// ----------ここから----------
-var bodyParser = require('body-parser');
-var request = require('request');
-var async = require('async');
-
-///app.set('port', (process.env.PORT || 5000));
-app.use(bodyParser.urlencoded({extended: true}));  // JSONの送信を許可
-app.use(bodyParser.json());                        // JSONのパースを楽に（受信時）
-
-// LINE developersのWebhook URL設定と同値
-app.post('/gora', function(req, res){
-
-    async.waterfall([
-        // 楽天GORA API
-        // https://webservice.rakuten.co.jp/explorer/api/Gora/GoraGolfCourseSearch/
-        function(gora) {
-
-            var json = req.body;
-
-            // 受信テキスト
-            var arg = json.events[0].message.text;
-            var search_place_array = arg.split("\n");
-
-            //検索キーワード
-///            var gnavi_keyword = "";
-///            if(search_place_array.length == 2){
-///                var keyword_array = search_place_array[1].split("、");
-///                gnavi_keyword = keyword_array.join();
-///            }
-
-            // 楽天GORA API https://webservice.rakuten.co.jp/explorer/api/Gora/GoraGolfCourseSearch/
-            var gora_url = 'https://app.rakuten.co.jp/services/api/Gora/GoraGolfCourseSearch/20131113';
-
-            // 楽天GORA リクエストパラメータの設定
-            var gora_query = {
-                "format": "json",
-///                "keyword": search_place_array[0],
-                "keyword": "golf",
-                "applicationId":"1085867087619845466"	//<楽天GORAのアプリID>
-            };
-
-            var gora_options = {
-                url: gora_url,
-                headers : {'Content-Type' : 'application/json; charset=UTF-8'},
-                qs: gora_query,
-                json: true
-            };
-
-            // 検索結果をオブジェクト化
-            var search_result = {};
-
-            request.get(gora_options, function (error, response, body) {
-                if (!error && response.statusCode == 200) {
-                    if('error' in body){
-                        console.log("検索エラー" + JSON.stringify(body));
-                        return;
-                    }
-
-                    // ゴルフ場名
-///                    if('golfCourseName' in body.rest){
-                        search_result['golfCourseName'] = body.rest.golfCourseName;
-///                    }
-
-                    gora(null, json, search_result);
-
-                } else {
-                    console.log('error: '+ response.statusCode);
-                }
-            });
-        },
-    ],
+// --------------------
+var bodyParser = require("body-parser");
+var request = require("request");
+var async = require("async");
 
 
-    // LINE BOT
-    function(err, json, search_result) {
-        if(err){
-            return;
-        }
 
-        //ヘッダー定義
-        var headers = {
-            'Content-Type' : 'application/json; charset=UTF-8',
-        };
 
-        // 送信データ作成
-        var data = {
-　　　　　      replyToken: req.body.events[0].replyToken,
 
-            messages: [
+/// nano ADD start
+var nano = require('nano')('https://b70e7dcb-0e1e-4d2c-ae0a-644126271fa2-bluemix:61ec6bc0109eef5d422f5720a1f583fca558f046abdd171fc75de21f9c408a4b@b70e7dcb-0e1e-4d2c-ae0a-644126271fa2-bluemix.cloudant.com');
 
-/*　TEST
-                    // type:
-                    // Must be one of the following values: [text, image, video, audio, location, sticker, template, imagemap]
-                    // REference: https://devdocs.line.me/ja/#webhook-event-object
-                    {
-                    type: "text",
-                    text: "TEST MESSAGE!"
-                    },
-*/
+// clean up the database we created previousl
+nano.db.destroy('prints', function() {
+  // create a new database
+  nano.db.create('prints', function() {
+    // specify the database we are going to use
+    var prints = nano.use('prints');
+    // and insert a document in it
+    prints.insert({ 'landscapes': [
+    	{ 
+    	  'id' : 1, 
+    	  'title':  'Antarctica' ,
+          'description': "Lauren's husband took this spectacular photo when they visited Antarctica in December of 2012. This is one of our hot sellers, so it rarely goes on sale."  ,
+          'imgsrc': 'penguin.jpg' ,
+           'price': 100 ,
+            'quan':  6 },
 
-                    // テキスト
-                    {
-                        type: "text",
-                        text: '◆ゴルフ場名：\n' + search_result['golfCourseName']
-/*
-                    },
-                    // 画像
-                    {
-                        type: "image",
-                        originalContentUrl: search_result['shop_image1'],
-                        previewImageUrl: search_result['shop_image1']
-                    },
-
-                    // 位置情報
-                    {
-                        type: "location",
-                        title: '◆地図：',
-                        address: search_result['address'],
-                        latitude: Number(search_result['latitude']),
-                        longitude: Number(search_result['longitude'])
-*/
-                    }
-            ]
-        };
-
-        //オプションを定義
-        var options = {
-          method: 'POST',
-          uri: 'https://api.line.me/v2/bot/message/reply',
-          headers: headers,
-          proxy : process.env.FIXIE_URL,
-          body: data,
-          auth: {
-    　　　　　　　//himekawa
-            bearer: 'eTHucFEaH/DE70uArA1jo81RAjUkI6twA9jmlsfjoZje/hobzKQr23VevFH53QtLN9gdnMgdKT3TW3lWX3oU6cIC/ez/g6kaIF1I0hV3Hxd1PAbgsWKncQF4IbjGNWJy7Qf/gq6hz83dQRicq6lbgAdB04t89/1O/w1cDnyilFU=' //himekawa
-    　　　　　　　//himekawa_trial
-            //bearer: 'kot0ml/nHkq0mplbcLKa5NIl0gi58FGRdQw/u9sL8ZBUtM1QztJyo+MD131tkUgnal6ThOWsRwLssL2oL1f69iWbYdNsHZf3ZJT3VuqafwRpf6Z5/S5oKU0bIe+OqhdIPn/CwHdAMZIwyp65j0Km4gdB04t89/1O/w1cDnyilFU=' //himekawa_trial
-          },
-          json: true
-        };
-  
-        request(options, function(err, res, body) {
-          console.log(JSON.stringify(res));
-        });
-        
-        res.send('OK');
-        
-      });
+     	{
+     	  'id' : 2,
+     	  'title':  'Alaska' ,
+          'description': "Lauren loves this photo even though she wasn't present when the photo was taken. Her husband took this photo on a guy's weekend in Alaska."  ,
+          'imgsrc': 'alaska.jpg' ,
+           'price': 75 ,
+            'quan':  1 },
+    	{
+    	  'id' : 3,
+    	  'title':  'Australia' ,
+          'description': "This photo is another one of Lauren's favorites! Her husband took these photos of the Sydney Opera House in 2011."  ,
+          'imgsrc': 'sydney.jpg' ,
+           'price': 100 ,
+            'quan':  0 },
+    	]}, 'inventory', function(err, body, header) {
+      if (err) {
+        console.log('Error creating document - ', err.message);
+        return;
+      }
+      console.log('all records inserted.')
+      console.log(body);
     });
-
-// --------ここまで追加--------
-
-// serve the files out of ./public as our main files
-app.use(express.static(__dirname + '/public'));
+  });
+});
+/// nano ADD end
 
 
-// get the app environment from Cloud Foundry
+
+
+
+app.use(bodyParser.urlencoded({
+	extended: true
+})); // JSON
+app.use(bodyParser.json()); // JSON
+
+
+app.post("/gora", function(req, res) {
+
+	// 1.rakuten GORA
+	async.waterfall([
+			function(gora) {
+
+				// 1-1.rakuten GORA API - URL
+				// https://webservice.rakuten.co.jp/explorer/api/Gora/GoraGolfCourseSearch/
+				var gora_url = "https://app.rakuten.co.jp/services/api/Gora/GoraGolfCourseSearch/20131113";
+
+
+				// 1-2.rakuten GORA API - Request Parameter
+				var json = req.body;
+				var search_place = json.events[0].message.text;
+				// 都道府県
+				var search_place_array = search_place.split("\n");
+				// 検索キーワード
+				var gora_keyword = "";
+				if (search_place_array.length === 2) {
+					var keyword_array = search_place_array[1].split("、");
+					gora_keyword = keyword_array.join();
+				}
+
+				var gora_query = {
+					"format": "json",
+					"areaCode": search_place_array[0],
+					"keyword": gora_keyword,
+					"formatVersion": "2",
+					///                "hits": "1",
+					"applicationId": "1085867087619845466" // @kazu535
+				};
+				/// DEBUG
+				///console.log("DEBUG(I) -- Line1 areaCode                : " + search_place_array[0]);
+				///console.log("DEBUG(I) -- Line2 keyword                 : " + gora_keyword);
+
+				var gora_options = {
+					url: gora_url,
+					headers: {
+						"Content-Type": "application/json; charset=UTF-8"
+					},
+					qs: gora_query,
+					json: true
+				};
+
+
+				// 1-3.rakuten GORA API - Object
+				var search_result = {};
+
+
+				// 1-4.rakuten GORA API - Request
+				/// DEBUG
+				console.log("DEBUG(I) -- REQUEST for gora             : " + JSON.stringify(gora_options));
+
+				request.get(gora_options, function(error, response, body) {
+					/// DEBUG
+					///console.log("DEBUG(O) -- REPLY from gora           : " + JSON.stringify(body));
+
+					if (!error && response.statusCode === 200) {
+						if ("error_description" in body) {
+							console.log("Error@1-4   : rakuten GORA API - error_description in body");
+							console.log(" statusCode : " + response.statusCode);
+							console.log(" response   : " + JSON.stringify(response));
+							return;
+						}
+
+						if ("count" in body) {
+							// 検索数
+							search_result["count"] = body.count;
+							///console.log("DEBUG(O) -- search_result[count]         : " + search_result["count"]);
+
+							// ヒット件数
+							search_result["hits"] = body.hits;
+							///console.log("DEBUG(O) -- search_result[hits]          : " + search_result["hits"]);
+
+							// ゴルフ場ID
+							search_result["golfCourseId"] = body.Items[0].golfCourseId;
+							///console.log("DEBUG(O) -- search_result[golfCourseId]  : " + search_result["golfCourseId"]);
+
+							// ゴルフ場名
+							search_result["golfCourseName"] = body.Items[0].golfCourseName;
+							///console.log("DEBUG(O) -- search_result[golfCourseName]: " + search_result["golfCourseName"]);
+						}
+
+						// 1-5-1.rakuten GORA detail API - URL
+						// https://webservice.rakuten.co.jp/explorer/api/Gora/GoraGolfCourseDetail/
+						var gora_detail_url = "https://app.rakuten.co.jp/services/api/Gora/GoraGolfCourseDetail/20140410";
+
+
+						// 1-5-2.rakuten GORA detail API - Request Parameter
+						var gora_detail_query = {
+							"format": "json",
+							"formatVersion": "2",
+							"golfCourseId": search_result["golfCourseId"],
+							///                "golfCourseId": "120035",
+							"applicationId": "1085867087619845466" // @kazu535
+						};
+
+						var gora_detail_options = {
+							url: gora_detail_url,
+							headers: {
+								"Content-Type": "application/json; charset=UTF-8"
+							},
+							qs: gora_detail_query,
+							json: true
+						};
+
+						// 1-5-3.rakuten GORA detail API - Request
+						///
+						console.log("DEBUG(I) -- REQUEST for gora detail      : " + JSON.stringify(gora_detail_options));
+						request.get(gora_detail_options, function(error, response, body) {
+							/// DEBUG
+							///console.log("DEBUG(O) -- REPLY from gora detail    : " + JSON.stringify(body));
+
+							if (!error && response.statusCode === 200) {
+								if ("error_description" in body) {
+									console.log("Error@1-5-3 : rakuten GORA detail API - error_description in body");
+									console.log(" statusCode : " + response.statusCode);
+									console.log(" response   : " + JSON.stringify(response));
+									return;
+								}
+
+								// 住所
+								search_result["address"] = body.Item.address;
+								// ホール数
+								search_result["holeCount"] = body.Item.holeCount;
+								// 距離
+								search_result["courseDistance"] = body.Item.courseDistance;
+								// 総合評価
+								search_result["evaluation"] = body.Item.evaluation;
+								// 距離が長い
+								search_result["distance"] = body.Item.distance;
+								// フェアウェイが広い
+								search_result["fairway"] = body.Item.fairway;
+								// 予約カレンダーURL
+								search_result["reserveCalUrl"] = body.Item.reserveCalUrl;
+								// 交通情報(地図)URL
+								search_result["routeMapUrl"] = body.Item.routeMapUrl;
+
+								gora(null, json, search_result);
+
+							} else {
+								console.log("Error@1-5-3 : rakuten GORA detail API - error");
+								console.log(" statusCode : " + response.statusCode);
+								console.log(" response   : " + JSON.stringify(response));
+							}
+
+						});
+
+					} else {
+						console.log("Error@1-4   : rakuten GORA API - error");
+						console.log(" statusCode : " + response.statusCode);
+						console.log(" response   : " + JSON.stringify(response));
+					}
+				});
+			},
+		],
+
+
+		// 2.LINE BOT
+		function(err, json, search_result) {
+			if (err) {
+				return;
+			}
+
+			// 2-1.LINE BOT - Response Parameter
+			var headers = {
+				"Content-Type": "application/json; charset=UTF-8",
+			};
+
+			var data = {
+				replyToken: req.body.events[0].replyToken,
+				messages: [
+					//テキスト
+					{
+						type: "text",
+						text: search_result["golfCourseName"] +
+							"\n" + search_result["address"] +
+							"\n\n◆距離： " + search_result["courseDistance"] +
+							"\n◆評価： " + search_result["evaluation"] +
+							"\n  Distance " + search_result["distance"] +
+							"\n  Fairway   " + search_result["fairway"] +
+							"\n◆予約：\n" + search_result["reserveCalUrl"] +
+							"\n◆地図：\n" + search_result["routeMapUrl"]
+					}
+				]
+			};
+
+			var options = {
+				method: "POST",
+				uri: "https://api.line.me/v2/bot/message/reply",
+				headers: headers,
+				proxy: process.env.FIXIE_URL,
+				body: data,
+				auth: {
+					//himekawa
+					bearer: "eTHucFEaH/DE70uArA1jo81RAjUkI6twA9jmlsfjoZje/hobzKQr23VevFH53QtLN9gdnMgdKT3TW3lWX3oU6cIC/ez/g6kaIF1I0hV3Hxd1PAbgsWKncQF4IbjGNWJy7Qf/gq6hz83dQRicq6lbgAdB04t89/1O/w1cDnyilFU=" //himekawa
+				},
+				json: true
+			};
+
+			// 2-2.LINE BOT - Response
+			request(options, function(err, res, body) {
+				console.log("DEBUG(O) -- RESPONSE                     : " + JSON.stringify(res));
+
+				// 403の場合、LINEのServer IP Whitelistへの追加が必要
+				if (res.statusCode === 403) {
+					console.log("DEBUG(O) -- add Server IP Whitelist      : " + res.body.message);
+				}
+
+			});
+
+			res.send("OK");
+
+		});
+});
+
+
+app.use(express.static(__dirname + "/public"));
+
+
 var appEnv = cfenv.getAppEnv();
 
-// start server on the specified port and binding host
-app.listen(appEnv.port, '0.0.0.0', function() {
-  // print a message when the server starts listening
-  console.log("server starting on " + appEnv.url);
+app.listen(appEnv.port, "0.0.0.0", function() {
+	console.log("server starting on " + appEnv.url);
 });
